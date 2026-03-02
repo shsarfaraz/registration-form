@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registrationForm');
     const successMessage = document.getElementById('successMessage');
-    const formWrapper = document.querySelector('.form-wrapper');
+    const formWrapper = document.getElementById('formWrapper');
 
     // Validation functions
     function validateFullName(name) {
@@ -34,8 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (password.length < 8) {
             return 'Password must be at least 8 characters long';
         }
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-            return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+        const hasLower = /[a-z]/.test(password);
+        const hasUpper = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        if (!hasLower || !hasUpper || !hasNumber) {
+            return 'Password must contain uppercase, lowercase, and number';
         }
         return '';
     }
@@ -47,32 +50,34 @@ document.addEventListener('DOMContentLoaded', function() {
         return '';
     }
 
-    // Show error message
     function showError(elementId, message) {
         const errorElement = document.getElementById(elementId);
-        errorElement.textContent = message;
+        if (errorElement) {
+            errorElement.textContent = message;
+        }
     }
 
-    // Clear error message
     function clearError(elementId) {
         const errorElement = document.getElementById(elementId);
-        errorElement.textContent = '';
+        if (errorElement) {
+            errorElement.textContent = '';
+        }
     }
 
-    // Clear all errors
     function clearAllErrors() {
         const errors = document.querySelectorAll('.error');
-        errors.forEach(error => error.textContent = '');
+        errors.forEach(function(error) {
+            error.textContent = '';
+        });
     }
 
-    // Form submission
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        console.log('Form submitted!');
         clearAllErrors();
 
         let isValid = true;
 
-        // Get form values
         const fullName = document.getElementById('fullName').value.trim();
         const email = document.getElementById('email').value.trim();
         const phone = document.getElementById('phone').value.trim();
@@ -81,56 +86,51 @@ document.addEventListener('DOMContentLoaded', function() {
         const country = document.getElementById('country').value;
         const terms = document.getElementById('terms').checked;
 
-        // Validate Full Name
+        console.log('Form values:', { fullName, email, phone, country, terms });
+
         const nameError = validateFullName(fullName);
         if (nameError) {
             showError('fullNameError', nameError);
             isValid = false;
         }
 
-        // Validate Email
         const emailError = validateEmail(email);
         if (emailError) {
             showError('emailError', emailError);
             isValid = false;
         }
 
-        // Validate Phone
         const phoneError = validatePhone(phone);
         if (phoneError) {
             showError('phoneError', phoneError);
             isValid = false;
         }
 
-        // Validate Password
         const passwordError = validatePassword(password);
         if (passwordError) {
             showError('passwordError', passwordError);
             isValid = false;
         }
 
-        // Validate Confirm Password
         const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
         if (confirmPasswordError) {
             showError('confirmPasswordError', confirmPasswordError);
             isValid = false;
         }
 
-        // Validate Country
         if (!country) {
             showError('countryError', 'Please select a country');
             isValid = false;
         }
 
-        // Validate Terms
         if (!terms) {
             showError('termsError', 'You must agree to the terms and conditions');
             isValid = false;
         }
 
-        // If form is valid, show success message
+        console.log('Validation result:', isValid);
+
         if (isValid) {
-            // Store data in localStorage (optional)
             const userData = {
                 fullName: fullName,
                 email: email,
@@ -138,18 +138,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 country: country,
                 registeredAt: new Date().toISOString()
             };
-            localStorage.setItem('registeredUser', JSON.stringify(userData));
+            
+            try {
+                localStorage.setItem('registeredUser', JSON.stringify(userData));
+            } catch (e) {
+                console.log('LocalStorage error:', e);
+            }
 
-            // Hide form and show success message
-            formWrapper.classList.add('hidden');
-            successMessage.classList.add('show');
+            console.log('Showing success message...');
+            
+            if (formWrapper) {
+                formWrapper.classList.add('hidden');
+            }
+            if (successMessage) {
+                successMessage.classList.add('show');
+            }
 
-            // Log the data (for demonstration)
             console.log('Registration Data:', userData);
+            alert('Registration Successful!');
         }
     });
 
-    // Real-time validation on input blur
     document.getElementById('fullName').addEventListener('blur', function() {
         const error = validateFullName(this.value);
         showError('fullNameError', error);
