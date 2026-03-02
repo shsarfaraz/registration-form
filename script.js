@@ -2,8 +2,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('registrationForm');
     const successMessage = document.getElementById('successMessage');
     const formWrapper = document.getElementById('formWrapper');
+    const submitBtn = document.querySelector('.submit-btn');
 
-    // Validation functions
+    // Google Apps Script Web App URL
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8dUgEYRGKylSY-G3nl_07crPwQaVCRBjyqBlS_wCxrApDqidzoIy4dOZ3u-uBtCk/exec';
+
     function validateFullName(name) {
         if (name.trim().length < 3) {
             return 'Name must be at least 3 characters long';
@@ -57,13 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function clearError(elementId) {
-        const errorElement = document.getElementById(elementId);
-        if (errorElement) {
-            errorElement.textContent = '';
-        }
-    }
-
     function clearAllErrors() {
         const errors = document.querySelectorAll('.error');
         errors.forEach(function(error) {
@@ -73,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        console.log('Form submitted!');
         clearAllErrors();
 
         let isValid = true;
@@ -85,8 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const confirmPassword = document.getElementById('confirmPassword').value;
         const country = document.getElementById('country').value;
         const terms = document.getElementById('terms').checked;
-
-        console.log('Form values:', { fullName, email, phone, country, terms });
 
         const nameError = validateFullName(fullName);
         if (nameError) {
@@ -128,34 +121,47 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        console.log('Validation result:', isValid);
-
         if (isValid) {
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
             const userData = {
                 fullName: fullName,
                 email: email,
                 phone: phone,
-                country: country,
-                registeredAt: new Date().toISOString()
+                country: country
             };
-            
-            try {
-                localStorage.setItem('registeredUser', JSON.stringify(userData));
-            } catch (e) {
-                console.log('LocalStorage error:', e);
-            }
 
-            console.log('Showing success message...');
-            
-            if (formWrapper) {
+            // Send to Google Sheets
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(function() {
+                // Save to localStorage
+                try {
+                    localStorage.setItem('registeredUser', JSON.stringify(userData));
+                } catch (e) {
+                    console.log('LocalStorage error:', e);
+                }
+
+                // Show success message
                 formWrapper.classList.add('hidden');
-            }
-            if (successMessage) {
                 successMessage.classList.add('show');
-            }
 
-            console.log('Registration Data:', userData);
-            alert('Registration Successful!');
+                console.log('Registration Data:', userData);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Something went wrong. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+            });
         }
     });
 
