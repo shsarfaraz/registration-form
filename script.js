@@ -122,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (isValid) {
-            // Disable button
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
 
@@ -133,24 +132,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 country: country
             };
 
-            // Send to Google Sheets
+            console.log('Sending data to Google Sheets:', userData);
+
+            // Send to Google Sheets using form submission (more reliable)
+            const formData = new FormData();
+            formData.append('fullName', fullName);
+            formData.append('email', email);
+            formData.append('phone', phone);
+            formData.append('country', country);
+
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData)
+                body: formData
             })
             .then(function() {
-                // Save to localStorage
+                console.log('Data sent successfully!');
+                
                 try {
                     localStorage.setItem('registeredUser', JSON.stringify(userData));
                 } catch (e) {
                     console.log('LocalStorage error:', e);
                 }
 
-                // Show success message
                 formWrapper.classList.add('hidden');
                 successMessage.classList.add('show');
 
